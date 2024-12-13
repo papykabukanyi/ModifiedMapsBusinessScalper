@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Google Maps Scraper</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div id="content">
+        <h1>Google Maps Scraper</h1>
+        <form id="scrape-form">
+            <input type="text" id="search" name="search" placeholder="Search Term">
+            <input type="number" id="total" name="total" placeholder="Total" min="1">
+            <button type="submit">Scrape</button>
+        </form>
+        <div id="output">
+            <h2>Scraped Files</h2>
+            <ul id="file-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        function loadFiles() {
+            $.getJSON('/files', function(data) {
+                $('#file-list').empty();
+                data.forEach(function(file) {
+                    $('#file-list').append(
+                        `<li>
+                            <a href="${file}" download>${file}</a>
+                            <button class="delete-file" data-filename="${file}">Delete</button>
+                        </li>`
+                    );
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            loadFiles();
+
+            $('#scrape-form').on('submit', function(event) {
+                event.preventDefault();
+                const search = $('#search').val();
+                const total = $('#total').val();
+                $.post('/scrape', { search, total }, function(data) {
+                    loadFiles();
+                });
+            });
+
+            $(document).on('click', '.delete-file', function() {
+                const filename = $(this).data('filename');
+                $.post('/delete', { filename }, function() {
+                    loadFiles();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

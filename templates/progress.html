@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scraping Progress</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .table {
+            margin-top: 20px;
+        }
+        .progress-bar {
+            transition: width 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Scraping Progress for {{ city }} - {{ business_type }}</h2>
+        <div class="progress">
+            <div id="progress-bar" class="progress-bar" role="progressbar" style="width:0%">
+                0%
+            </div>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Website</th>
+                    <th>Phone Number</th>
+                    <th>Contact Status</th>
+                </tr>
+            </thead>
+            <tbody id="business-table-body">
+            </tbody>
+        </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        $(document).ready(function(){
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on('connect', function() {
+                console.log('Socket connected');
+            });
+
+            socket.on('new_business', function(business) {
+                console.log('New business received:', business);
+                var newRow = '<tr>' +
+                    '<td>' + business.name + '</td>' +
+                    '<td>' + business.address + '</td>' +
+                    '<td>' + business.website + '</td>' +
+                    '<td>' + business.phone_number + '</td>' +
+                    '<td>' + business.contact_status + '</td>' +
+                    '</tr>';
+                $('#business-table-body').append(newRow);
+            });
+
+            socket.on('progress_update', function(data) {
+                console.log('Progress update received:', data);
+                var progress = $('#progress-bar');
+                progress.width(data.progress + '%');
+                progress.html(Math.round(data.progress) + '%');
+            });
+
+            socket.on('scraping_complete', function(data) {
+                console.log('Scraping complete:', data.business_list);
+                var progress = $('#progress-bar');
+                progress.width('100%');
+                progress.html('100%');
+            });
+        });
+    </script>
+</body>
+</html>
